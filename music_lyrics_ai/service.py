@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Protocol
 
 from .config import AppSettings, GenerationRequest, GenerationResult
+
+
+def _log(message: str) -> None:
+    print(f"[music-lyrics-ai] {message}", file=sys.stderr, flush=True)
 
 
 class MusicBackend(Protocol):
@@ -48,10 +53,16 @@ class HuggingFaceMusicBackend:
         device = self._resolve_device(torch)
         dtype = torch.float16 if device.startswith("cuda") else torch.float32
 
+        _log(
+            f"Loading pretrained model {repo_id} on device={device}. If this is the first run, files may download for several minutes. Do not close the terminal or press Ctrl+C."
+        )
+        _log("Downloading/loading processor...")
         processor = AutoProcessor.from_pretrained(repo_id)
+        _log("Downloading/loading model weights...")
         model = MusicgenForConditionalGeneration.from_pretrained(repo_id, torch_dtype=dtype)
         model.to(device)
         model.generation_config.do_sample = True
+        _log(f"Model ready: {repo_id} on {device}.")
 
         self._processor = processor
         self._model = model
@@ -97,6 +108,9 @@ class HuggingFaceMusicBackend:
         processor, model, torch = self._lazy_load()
         prompt = build_conditioned_prompt(request)
         device = self._resolve_device(torch)
+        _log(
+            f"Starting generation: style={request.style}, duration={request.duration_seconds}s, seed={request.seed}, device={device}"
+        )
 
         if request.reference_audio_path:
             audio_array, sample_rate = self._prepare_audio_prompt(request.reference_audio_path)
@@ -114,6 +128,7 @@ class HuggingFaceMusicBackend:
         generator_device = "cpu" if device == "mps" else device
         generator = torch.Generator(device=generator_device).manual_seed(int(request.seed))
 
+        _log("Running model.generate(...). This can be slow on CPU.")
         with torch.inference_mode():
             audio_values = model.generate(
                 **prepared_inputs,
@@ -144,6 +159,7 @@ class HuggingFaceMusicBackend:
         output_path = output_dir / filename
         sample_rate = int(model.config.audio_encoder.sampling_rate)
         wavfile.write(output_path, sample_rate, int_waveform)
+        _log(f"Saved audio to {output_path}")
 
         metadata = asdict(request)
         metadata["generated_at"] = datetime.now(timezone.utc).isoformat()

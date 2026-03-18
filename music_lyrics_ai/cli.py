@@ -2,6 +2,11 @@ from __future__ import annotations
 
 import argparse
 
+
+def _cli_log(message: str) -> None:
+    print(f"[music-lyrics-ai] {message}", flush=True)
+
+
 from .api import create_api_app
 from .api_keys import APIKeyStore
 from .config import AppSettings, MODEL_PRESETS
@@ -64,11 +69,18 @@ def main() -> None:
             api_key_store=args.api_key_store,
         )
         key_store = APIKeyStore(settings.api_key_store)
+        _cli_log(f"Creating API key in {settings.api_key_store} ...")
         print(key_store.create_key(args.label))
         return
 
     if args.command == "launch":
         settings = _settings_from_args(args)
+        _cli_log(
+            f"Starting Gradio studio on http://{args.host}:{args.port} with preset={settings.model.key} ({settings.model.repo_id})."
+        )
+        _cli_log(
+            "The UI should open quickly, but the first actual generation may download model files for several minutes. If PowerShell seems idle, wait and do not press Ctrl+C."
+        )
         key_store = APIKeyStore(settings.api_key_store)
         service = MusicStudioService(settings)
         demo = build_demo(service, key_store, settings)
@@ -77,6 +89,12 @@ def main() -> None:
 
     if args.command == "serve-api":
         settings = _settings_from_args(args, api_mode=True)
+        _cli_log(
+            f"Starting REST API on http://{args.host}:{args.port} with preset={settings.model.key} ({settings.model.repo_id})."
+        )
+        _cli_log(
+            "The first generation request may download model files for several minutes. Keep the terminal open and wait until the request finishes."
+        )
         key_store = APIKeyStore(settings.api_key_store)
         service = MusicStudioService(settings)
         app = create_api_app(service, key_store, settings)

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "music-lyrics-ai"
+version = "0.2.0"
+description = "Local text-to-music studio with Gradio UI, developer API keys, and pretrained MusicGen integration"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "OpenAI Codex" }
+]
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+app = [
+  "fastapi>=0.110",
+  "gradio>=4.44",
+  "soundfile>=0.12",
+  "uvicorn>=0.30",
+]
+inference = [
+  "accelerate>=0.30",
+  "safetensors>=0.4",
+  "sentencepiece>=0.2",
+  "torch>=2.2",
+  "transformers>=4.41",
+]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+lyrics-ai = "music_lyrics_ai.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["music_lyrics_ai*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

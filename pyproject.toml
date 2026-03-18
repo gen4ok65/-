@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "music-lyrics-ai"
+version = "0.1.0"
+description = "Self-contained multi-style neural lyric generation"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "OpenAI Codex" }
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+lyrics-ai = "music_lyrics_ai.cli:main"
+
+[tool.setuptools]
+packages = ["music_lyrics_ai"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

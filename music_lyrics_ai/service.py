@@ -19,6 +19,9 @@ class MusicBackend(Protocol):
     def generate(self, request: GenerationRequest) -> GenerationResult:
         ...
 
+    def warmup(self) -> str | None:
+        ...
+
 
 def build_conditioned_prompt(request: GenerationRequest) -> str:
     chunks = [
@@ -104,6 +107,10 @@ class HuggingFaceMusicBackend:
             moved[key] = value.to(device) if hasattr(value, "to") else value
         return moved
 
+    def warmup(self) -> str:
+        self._lazy_load()
+        return self.settings.model.repo_id
+
     def generate(self, request: GenerationRequest) -> GenerationResult:
         processor, model, torch = self._lazy_load()
         prompt = build_conditioned_prompt(request)
@@ -182,6 +189,11 @@ class MusicStudioService:
     def __init__(self, settings: AppSettings, backend: MusicBackend | None = None) -> None:
         self.settings = settings
         self.backend = backend or HuggingFaceMusicBackend(settings)
+
+    def warmup(self) -> str | None:
+        if hasattr(self.backend, "warmup"):
+            return self.backend.warmup()
+        return None
 
     def generate(self, request: GenerationRequest) -> GenerationResult:
         cleaned_request = GenerationRequest(

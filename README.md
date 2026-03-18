@@ -256,6 +256,39 @@ python -m pytest -q
 2 passed
 ```
 
+### Шаг 5. Очень рекомендую сначала проверить среду и отдельно скачать модель
+
+Это новый, более надёжный путь, если у вас уже была ситуация, когда PowerShell как будто зависал:
+
+```bash
+python -m music_lyrics_ai.cli doctor
+```
+
+Потом отдельно скачайте / прогрейте модель:
+
+```bash
+python -m music_lyrics_ai.cli preload-model --preset melody
+```
+
+Когда в терминале появится сообщение `Model ready`, только после этого открывайте интерфейс.
+
+### Шаг 6. Если вы на Windows, можно вообще не печатать команды вручную
+
+В корне проекта появились готовые файлы:
+
+- `preload_model.bat` — заранее скачивает модель
+- `start_gradio.bat` — запускает интерфейс
+- `start_api.bat` — запускает API
+
+Их можно запускать двойным кликом из Проводника Windows.
+
+Рекомендуемый порядок такой:
+
+1. Двойной клик по `preload_model.bat`
+2. Дождаться сообщения `Model ready`
+3. Двойной клик по `start_gradio.bat`
+4. Открыть `http://127.0.0.1:7860`
+
 ---
 
 ## Первый запуск приложения: буквально что делать
@@ -279,8 +312,14 @@ python -m music_lyrics_ai.cli launch --preset melody --host 127.0.0.1 --port 786
 ### Что будет после запуска
 
 1. В терминале начнут появляться сообщения.
-2. При **самом первом запуске** модель начнёт скачиваться — это может занять время.
-3. После успешного старта вы увидите локальный адрес, обычно такой:
+2. При **самом первом запуске** модель может ещё не быть скачана.
+3. Если хотите избежать неожиданного долгого ожидания, сначала выполните:
+
+```bash
+python -m music_lyrics_ai.cli preload-model --preset melody
+```
+
+4. После успешного старта вы увидите локальный адрес, обычно такой:
 
 ```text
 http://127.0.0.1:7860
@@ -593,6 +632,8 @@ python -m pip install -e .[app,inference,dev]
 Потом:
 
 ```bash
+python -m music_lyrics_ai.cli doctor
+python -m music_lyrics_ai.cli preload-model --preset melody
 lyrics-ai launch --preset melody
 ```
 
@@ -653,6 +694,21 @@ lyrics-ai launch --preset small --device cpu
 ```
 
 Если вы уже нажали `Ctrl+C`, просто запустите команду ещё раз.
+
+Самый безопасный вариант после такой ошибки:
+
+```bash
+python -m music_lyrics_ai.cli doctor
+python -m music_lyrics_ai.cli preload-model --preset melody
+```
+
+И только потом:
+
+```bash
+python -m music_lyrics_ai.cli launch --preset melody
+```
+
+На Windows можно вместо этого просто сделать двойной клик по `preload_model.bat`, дождаться `Model ready`, а затем двойной клик по `start_gradio.bat`.
 
 ### Проблема: генерация очень медленная
 
